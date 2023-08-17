@@ -6,6 +6,7 @@ import re
 from ofxstatement.plugin import Plugin
 from ofxstatement.parser import CsvStatementParser
 from ofxstatement.statement import StatementLine, Currency, Statement, generate_transaction_id
+from ofxstatement.plugins.bancopostaTransaction import BonificoTransaction, DebitTransaction, CreditTransaction, PostagiroTransaction, PagamentoPostamatTransaction, CommissioneTransaction, BolloTransaction, AddebitoDirettoTransaction, AddebitoPreautorizzatoTransaction, ATMTransaction
 
 # Possible values for the trntype property of a StatementLine object:
 # - CREDIT: Generic credit.
@@ -27,17 +28,17 @@ from ofxstatement.statement import StatementLine, Currency, Statement, generate_
 # - OTHER: Other.
 
 
-TRANSACTION_TYPES = {
-    "BONIFICO A VOSTRO FAVORE": "XFER",
-    "VOSTRA DISPOS. DI BONIFICO": "XFER",
-    "POSTAGIRO" : "XFER",
-    "IMPOSTA DI BOLLO": "FEE",
-    "COMMISSIONE RICARICA PREPAGATA": "SRVCHG",
-    "PAGAMENTO POSTAMAT": "PAYMENT",
-    "ATM": "ATM",
-    "ADDEBITO DIRETTO SDD": "DIRECTDEBIT",
-    "ADDEBITO PREAUTORIZZATO": "DIRECTDEBIT"
-}
+# TRANSACTION_TYPES = {
+#     "BONIFICO A VOSTRO FAVORE": "XFER",
+#     "VOSTRA DISPOS. DI BONIFICO": "XFER",
+#     "POSTAGIRO" : "XFER",
+#     "IMPOSTA DI BOLLO": "FEE",
+#     "COMMISSIONE RICARICA PREPAGATA": "SRVCHG",
+#     "PAGAMENTO POSTAMAT": "PAYMENT",
+#     "ATM": "ATM",
+#     "ADDEBITO DIRETTO SDD": "DIRECTDEBIT",
+#     "ADDEBITO PREAUTORIZZATO": "DIRECTDEBIT"
+# }
 
 class BancoPostaCSVStatementParser(CsvStatementParser):
     __slots__ = 'columns'
@@ -119,31 +120,31 @@ class BancoPostaCSVStatementParser(CsvStatementParser):
     def extract_postagiro_info(self, text: str):
         trntype = "POSTAGIRO"
         
-        # payee_start_index = text.find("DA")
-        # if payee_start_index == -1:
-        #     payee_start_index = text.find("BENEF")
-        #     if payee_start_index == -1:
-        #         return None, text, text
-        #     payee_start_index += len("BENEF")
-        # else:
-        #     payee_start_index += len("DA")
-        
-        # payee_end_index = text.find("PER")
-        # if payee_end_index == -1:
-        #     payee = text[payee_start_index:].strip()
-        #     memo = ""
-        # else:
-        #     payee = text[payee_start_index:payee_end_index].strip()
-        #     memo_start_index = payee_end_index + len("PER")
-        #     memo = text[memo_start_index:].strip()
-
-        if " DA " in text:
-            payee = text.split(" DA ")[1]
-        elif " BENEF " in text:
-            payee = text.split(" BENEF ")[1]
+        payee_start_index = text.find("DA")
+        if payee_start_index == -1:
+            payee_start_index = text.find("BENEF")
+            if payee_start_index == -1:
+                return None, text, text
+            payee_start_index += len("BENEF")
         else:
-            payee = ""
-        memo = payee
+            payee_start_index += len("DA")
+        
+        payee_end_index = text.find("PER")
+        if payee_end_index == -1:
+            payee = text[payee_start_index:].strip()
+            memo = ""
+        else:
+            payee = text[payee_start_index:payee_end_index].strip()
+            memo_start_index = payee_end_index + len("PER")
+            memo = text[memo_start_index:].strip()
+
+        # if " DA " in text:
+        #     payee = text.split(" DA ")[1]
+        # elif " BENEF " in text:
+        #     payee = text.split(" BENEF ")[1]
+        # else:
+        #     payee = ""
+        # memo = payee
         
         return trntype, payee, memo
 
@@ -182,8 +183,8 @@ class BancoPostaCSVStatementParser(CsvStatementParser):
 
     def parse_value(self, value: Optional[str], field: str) -> Any:
         value = value.strip() if value else value
-        if field == "amount" and isinstance(value, float):
-            return Decimal(value)
+        # if field == "amount" and isinstance(value, float):
+        #     return Decimal(value)
 
         # if field == "trntype":
             # Default: Debit card payment
@@ -192,6 +193,30 @@ class BancoPostaCSVStatementParser(CsvStatementParser):
             return self.parse_currency(value, field)
 
         return super().parse_value(value, field)
+    
+    def create_transaction(self, text, date, settlement_date, amount, currency):
+        transaction_type_map = {
+            "BONIFICO A VOSTRO FAVORE": BonificoTransaction,
+            "VOSTRA DISPOS. DI BONIFICO": BonificoTransaction,
+            "POSTAGIRO": PostagiroTransaction,
+            "IMPOSTA DI BOLLO": BolloTransaction,
+            "COMMISSIONE": CommissioneTransaction,
+            "PAGAMENTO POSTAMAT": PagamentoPostamatTransaction,
+            "VERSAMENTO": ATMTransaction,
+            "PRELIEVO": ATMTransaction,
+            "ADDEBITO DIRETTO": AddebitoDirettoTransaction,
+            "ADDEBITO PREAUTORIZZATO": AddebitoPreautorizzatoTransaction
+        }
+        for key, value in transaction_type_map.items():
+            if text.startswith(key):
+                return value(date, settlement_date, amount, text, currency)
+        
+        if amount > 0:
+            return CreditTransaction(date, settlement_date, amount, text, currency)
+        else:
+            return DebitTransaction(date, settlement_date, amount, text, currency)
+
+        return None
 
     def parse_record(self, line: List[str]) -> Optional[StatementLine]:
         # Ignore the header
@@ -204,40 +229,58 @@ class BancoPostaCSVStatementParser(CsvStatementParser):
         if line[c["Valuta"]].strip() == "":
             return None
 
-        # stmt_line = super().parse_record(line)
+        date = self.parse_value(line[c["Data"]], "date")
+        settlementDate = self.parse_value(line[c["Valuta"]], "date")
 
-        stmt_line = StatementLine()        
-
-        # date field
-        stmt_line.date = self.parse_value(line[c["Valuta"]], "date")
-
-        # amount field
         if line[c["Accrediti"]]:
             income = Decimal(line[c["Accrediti"]])
             outcome = 0
         elif line[c["Addebiti"]]:
             outcome = Decimal(line[c["Addebiti"]])
             income = 0
-        stmt_line.amount = income - outcome
+        amount = income - outcome
+        currency = self.parse_value("EUR", "currency")
+
+        description = line[c["Descrizione operazioni"]]
         
-        trntype, payee, memo = self.parse_description(line[c["Descrizione operazioni"]])
+        transaction = self.create_transaction(description, date, settlementDate, amount, currency)
+        stmt_line = transaction.to_statement_line()
 
-        # transaction type field
-        if trntype is None:
-            if(stmt_line.amount < 0):
-                stmt_line.trntype = "DEBIT"
-            else:
-                stmt_line.trntype = "CREDIT"
-        else:
-            stmt_line.trntype = TRANSACTION_TYPES.get(trntype)
+        # stmt_line.id = generate_transaction_id(stmt_line)
 
-        stmt_line.payee = payee
-        stmt_line.memo = memo
+        
+        # stmt_line = StatementLine()        
+
+        # # date field
+        # stmt_line.date = self.parse_value(line[c["Valuta"]], "date")
+
+        # # amount field
+        # if line[c["Accrediti"]]:
+        #     income = Decimal(line[c["Accrediti"]])
+        #     outcome = 0
+        # elif line[c["Addebiti"]]:
+        #     outcome = Decimal(line[c["Addebiti"]])
+        #     income = 0
+        # stmt_line.amount = income - outcome
+        
+        # trntype, payee, memo = self.parse_description(line[c["Descrizione operazioni"]])
+
+        # # transaction type field
+        # if trntype is None:
+        #     if(stmt_line.amount < 0):
+        #         stmt_line.trntype = "DEBIT"
+        #     else:
+        #         stmt_line.trntype = "CREDIT"
+        # else:
+        #     stmt_line.trntype = TRANSACTION_TYPES.get(trntype)
+
+        # stmt_line.payee = payee
+        # stmt_line.memo = memo
 
         stmt_line.currency = self.parse_value("EUR", "currency")
 
-        # id field
-        stmt_line.id = generate_transaction_id(stmt_line)
+        # # id field
+        # stmt_line.id = generate_transaction_id(stmt_line)
 
         # Generate a unique ID
         # stmt_line.id = md5(f"{stmt_line.date}-{stmt_line.payee}-{stmt_line.amount}".encode())\
