@@ -10,12 +10,12 @@ with open("README.rst") as f:
     long_description = f.read()
 
 setup(
-    name="ofxstatement-sample",
+    name="ofxstatement-bancoposta",
     version=version,
-    author="Andrey Lebedev",
-    author_email="andrey@lebedev.lt",
+    author="Lorenzo Giudici",
+    author_email="lorenzogiudici5@gmail.com",
     url="https://github.com/kedder/ofxstatement",
-    description=("Sample plugin for ofxstatement"),
+    description=("Bancoposta plugin for ofxstatement"),
     long_description=long_description,
     license="GPLv3",
     keywords=["ofx", "banking", "statement"],
@@ -33,7 +33,7 @@ setup(
     package_dir={"": "src"},
     namespace_packages=["ofxstatement", "ofxstatement.plugins"],
     entry_points={
-        "ofxstatement": ["sample = ofxstatement.plugins.sample:SamplePlugin"]
+        "ofxstatement": ["bancoposta = ofxstatement.plugins.bancoposta:BancoPostaPlugin"]
     },
     install_requires=["ofxstatement"],
     include_package_data=True,
