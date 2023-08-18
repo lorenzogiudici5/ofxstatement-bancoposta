@@ -43,7 +43,7 @@ def test_bancoposta_simple() -> None:
     assert line2.trntype == "SRVCHG"
 
     line3 = statement.lines[3]
-    assert line3.amount == Decimal("250.00")
+    assert line3.amount == Decimal("1250.00")
     assert line3.currency.symbol == "EUR"
     assert line3.date == datetime.datetime(2018, 1, 23, 0, 0, 0)
     assert line3.payee == "NOME_MITTENTE - CAUSALE_BONIFICO"
@@ -103,7 +103,7 @@ def test_bancoposta_bonifico() -> None:
 
     line0 = statement.lines[0]
     assert line0.trntype == "XFER"
-    assert line0.amount == Decimal("-200.00")
+    assert line0.amount == Decimal("-100.00")
     assert line0.currency.symbol == "EUR"
     assert line0.date == datetime.datetime(2018, 8, 1, 0, 0, 0)
     assert line0.payee == "Lorenzo Giudici - Buon compleanno!"
@@ -111,7 +111,7 @@ def test_bancoposta_bonifico() -> None:
 
     line1 = statement.lines[1]
     assert line1.trntype == "XFER"
-    assert line1.amount == Decimal("200.00")
+    assert line1.amount == Decimal("2000.00")
     assert line1.currency.symbol == "EUR"
     assert line1.date == datetime.datetime(2018, 8, 2, 0, 0, 0)
     assert line1.payee == "Lorenzo Giudici - Tanti Auguri!"

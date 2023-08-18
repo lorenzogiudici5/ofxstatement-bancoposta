@@ -1,7 +1,8 @@
 # from hashlib import md5
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Iterable
 from decimal import Decimal
 import re
+import csv
 
 from ofxstatement.plugin import Plugin
 from ofxstatement.parser import CsvStatementParser
@@ -48,6 +49,9 @@ class BancoPostaCSVStatementParser(CsvStatementParser):
     def parse_currency(self, value: Optional[str], field: str) -> Currency:
         return Currency(symbol=value)
 
+    def parse_amount(self, value: [Optional[str]]) -> Decimal:
+        return Decimal(value.replace(" ", "").replace(".", "").replace(",", "."))
+
     def parse_value(self, value: Optional[str], field: str) -> Any:
         value = value.strip() if value else value
         # if field == "amount" and isinstance(value, float):
@@ -60,6 +64,9 @@ class BancoPostaCSVStatementParser(CsvStatementParser):
             return self.parse_currency(value, field)
 
         return super().parse_value(value, field)
+    
+    def split_records(self):
+        return csv.reader(self.fin, delimiter=';')
     
     def create_transaction(self, text, date, settlement_date, amount, currency):
         transaction_type_map = {
@@ -100,10 +107,10 @@ class BancoPostaCSVStatementParser(CsvStatementParser):
         settlementDate = self.parse_value(line[c["Valuta"]], "date")
 
         if line[c["Accrediti"]]:
-            income = Decimal(line[c["Accrediti"]])
+            income = self.parse_amount(line[c["Accrediti"]])
             outcome = 0
         elif line[c["Addebiti"]]:
-            outcome = Decimal(line[c["Addebiti"]])
+            outcome = self.parse_amount(line[c["Addebiti"]])
             income = 0
         amount = income - outcome
         currency = self.parse_value("EUR", "currency")
@@ -129,7 +136,7 @@ class BancoPostaPlugin(Plugin):
         f = open(filename, "r", encoding='utf-8')
         signature = f.readline()
 
-        csv_columns = [col.strip() for col in signature.split(",")]
+        csv_columns = [col.strip() for col in signature.split(";")]
         required_columns = [
             "Data",
             "Valuta",
@@ -139,7 +146,6 @@ class BancoPostaPlugin(Plugin):
         ]
 
         if set(required_columns).issubset(csv_columns):
-
             f.seek(0)
             parser = BancoPostaCSVStatementParser(f)
             parser.columns = {col: csv_columns.index(col) for col in csv_columns}
