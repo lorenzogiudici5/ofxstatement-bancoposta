@@ -200,9 +200,16 @@ class PagamentoPostamatTransaction(BancoPostaTransaction):
         match = re.search(date_time_pattern, description)
         if match:
             payee_start_index = match.end()
-            payee = description[payee_start_index:].strip()
+            payee_end_index = description.find(" OPERAZIONE ")
+            if payee_end_index != -1:
+                payee = description[payee_start_index:payee_end_index].strip()
+            else:
+                payee = description[payee_start_index:].strip()
         else:
-            payee = description
+            payee = ""
+
+        self.operation = description.split(" OPERAZIONE ")[1].split(" CARTA ")[0]
+        self.card = description.split(" CARTA ")[1]
 
         self.payee = payee
 

@@ -90,7 +90,7 @@ def test_bancoposta_pagamento_postamat() -> None:
     assert line0.currency.symbol == "EUR"
     assert line0.date == datetime.datetime(2018, 8, 1, 0, 0, 0)
     assert line0.memo == "PAGAMENTO POSTAMAT ALTRI GESTORI 20/08/2020 10.27 RICARICA HYPE BIELLA ITA OPERAZIONE AAAA CARTA 123456"
-    assert line0.payee == "RICARICA HYPE BIELLA ITA OPERAZIONE AAAA CARTA 123456"
+    assert line0.payee == "RICARICA HYPE BIELLA ITA"
 
 def test_bancoposta_bonifico() -> None:
     plugin = BancoPostaPlugin(UI(), {})
