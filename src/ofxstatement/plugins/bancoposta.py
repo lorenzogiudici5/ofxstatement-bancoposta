@@ -100,7 +100,8 @@ class BancoPostaCSVStatementParser(CsvStatementParser):
         c = self.columns
 
         # Ignore Saldo iniziale/finale
-        if line[c["Valuta"]].strip() == "":
+        settlementDateString = line[c["Valuta"]].strip()
+        if settlementDateString == "" or settlementDateString == "Valuta":
             return None
 
         date = self.parse_value(line[c["Data"]], "date")
