@@ -1,14 +1,16 @@
 # from hashlib import md5
-import os
+from ast import Dict
+from math import nan
 from typing import Optional, Any, List
 from decimal import Decimal
 import csv
-from ofxstatement.plugins.bancopostapdf import BancoPostaPdfStatementParser
-
+import pandas
+from pandas import DataFrame
 import tabula
 
+
 from ofxstatement.plugin import Plugin
-from ofxstatement.parser import CsvStatementParser
+from ofxstatement.parser import StatementParser
 from ofxstatement.statement import StatementLine, Currency, Statement
 from ofxstatement.plugins.bancopostaTransaction import BonificoTransaction, DebitTransaction, CreditTransaction, PostagiroTransaction, PagamentoPostamatTransaction, CommissioneTransaction, BolloTransaction, AddebitoDirettoTransaction, AddebitoPreautorizzatoTransaction, ATMTransaction
 
@@ -44,12 +46,14 @@ from ofxstatement.plugins.bancopostaTransaction import BonificoTransaction, Debi
 #     "ADDEBITO PREAUTORIZZATO": "DIRECTDEBIT"
 # }
 
-class BancoPostaCSVStatementParser(CsvStatementParser):
-    __slots__ = 'columns'
-
+class BancoPostaPdfStatementParser(StatementParser):
+    def __init__(self, filename):
+        super().__init__()
+        self.filename = filename
+    
     date_format = "%d/%m/%y"
 
-    def parse_currency(self, value: Optional[str], field: str) -> Currency:
+    def parse_currency(self, value: Optional[str]) -> Currency:
         return Currency(symbol=value)
 
     def parse_amount(self, value: [Optional[str]]) -> Decimal:
@@ -57,6 +61,7 @@ class BancoPostaCSVStatementParser(CsvStatementParser):
 
     def parse_value(self, value: Optional[str], field: str) -> Any:
         value = value.strip() if value else value
+        print(value)
         # if field == "amount" and isinstance(value, float):
         #     return Decimal(value)
 
@@ -68,8 +73,53 @@ class BancoPostaCSVStatementParser(CsvStatementParser):
 
         return super().parse_value(value, field)
     
-    def split_records(self):
-        return csv.reader(self.fin, delimiter=';')
+    def split_records(self) -> List[Dict]:
+        # return csv.reader(self.fin, delimiter=';')
+        dataFrame = tabula.read_pdf(self.filename, pages="all", pandas_options={'header': None, 'names': self.columns})
+        df = pandas.concat(dataFrame)
+        df = df.astype(str)
+              
+        # Create a new DataFrame to store the result
+        dfresult = pandas.DataFrame(columns=self.columns)
+
+        # Iterate over the rows of the DataFrame
+        i = 0
+        while i < len(df):
+            row = df.iloc[i]
+            data = row["Data"]
+            valuta = row["Valuta"]
+            addebiti = row["Addebiti"]
+            accrediti = row["Accrediti"]
+            description = row["Descrizione operazioni"]
+
+            # Check if the next row is a continuation of the current row
+            while i + 1 < len(df) and df.iloc[i + 1]["Data"] == "nan":
+                description += " " + df.iloc[i + 1]["Descrizione operazioni"]
+                i += 1
+            
+            # Add the row to the result DataFrame
+            dfresult = pandas.concat(
+                [
+                    dfresult,
+                    pandas.DataFrame(
+                        {
+                            "Data": [data],
+                            "Valuta": [valuta],
+                            "Addebiti": [addebiti],
+                            "Accrediti": [accrediti],
+                            "Descrizione operazioni": [description],
+                        }
+                    ),
+                ],
+                ignore_index=True,
+            )
+
+            i += 1
+    
+        print(dfresult)
+        result = dfresult.to_dict(orient='records')
+        print(result)
+        return result
     
     def create_transaction(self, text, date, settlement_date, amount, currency):
         transaction_type_map = {
@@ -95,36 +145,34 @@ class BancoPostaCSVStatementParser(CsvStatementParser):
 
         return None
 
-    def parse_record(self, line: List[str]) -> Optional[StatementLine]:
+    def parse_record(self, line: Dict) -> Optional[StatementLine]:
         # Ignore the header
-        if self.cur_record <= 1:
-            return None
-
-        c = self.columns
+        # if self.cur_record <= 1:
+        #     return None
 
         # Ignore Saldo iniziale/finale
-        settlementDateString = line[c["Valuta"]].strip()
-        if settlementDateString == "" or settlementDateString == "Valuta":
+        settlementDateString = line["Valuta"]
+        if settlementDateString == "nan" or settlementDateString == "Valuta":
             return None
-
-        date = self.parse_value(line[c["Data"]], "date")
-        settlementDate = self.parse_value(line[c["Valuta"]], "date")
-
-        if line[c["Accrediti"]]:
-            income = self.parse_amount(line[c["Accrediti"]])
+        
+        settlementDate = self.parse_value(settlementDateString, "date")
+        date = self.parse_value(line["Data"], "date")
+        
+        if line["Accrediti"]:
+            income = self.parse_amount(line["Accrediti"])
             outcome = 0
-        elif line[c["Addebiti"]]:
-            outcome = self.parse_amount(line[c["Addebiti"]])
+        elif line["Addebiti"]:
+            outcome = self.parse_amount(line["Addebiti"])
             income = 0
         amount = income - outcome
-        currency = self.parse_value("EUR", "currency")
+        currency = self.parse_currency("EUR")
 
-        description = line[c["Descrizione operazioni"]]
+        description = line["Descrizione operazioni"]
         
         transaction = self.create_transaction(description, date, settlementDate, amount, currency)
         stmt_line = transaction.to_statement_line()
 
-        stmt_line.currency = self.parse_value("EUR", "currency")
+        stmt_line.currency = self.parse_currency("EUR")
 
         return stmt_line
 
@@ -132,66 +180,3 @@ class BancoPostaCSVStatementParser(CsvStatementParser):
     def parse(self) -> Statement:
         statement = super().parse()
         return statement
-
-class BancoPostaPlugin(Plugin):
-    """BancoPosta plugin (for developers only)"""
-
-    def get_parser(self, filename: str):
-        extension = os.path.splitext(filename)[1]
-
-        required_columns = [
-            "Data",
-            "Valuta",
-            "Addebiti",
-            "Accrediti",
-            "Descrizione operazioni",
-        ]
-
-        if extension == '.csv':
-            f = open(filename, "r", encoding='utf-8')
-            signature = f.readline()
-
-            csv_columns = [col.strip() for col in signature.split(";")]
-            
-            if set(required_columns).issubset(csv_columns):
-                f.seek(0)
-                parser = BancoPostaCSVStatementParser(f)
-                parser.columns = {col: csv_columns.index(col) for col in csv_columns}
-                if 'account' in self.settings:
-                    parser.statement.account_id = self.settings['account']
-                else:
-                    parser.statement.account_id = 'BancoPosta'
-
-                if 'currency' in self.settings:
-                    parser.statement.currency = self.settings.get('currency', 'EUR')
-
-                if 'date_format' in self.settings:
-                    parser.date_format = self.settings['date_format']
-            
-                parser.statement.bank_id = self.settings.get('bank', 'BancoPosta')
-                return parser
-
-            # no plugin with matching signature was found
-            raise Exception("No suitable BancoPosta parser "
-                            "found for this statement file.")
-        elif extension == '.pdf':
-            # dataFrame = tabula.read_pdf(filename, pages="all")
-            parser = BancoPostaPdfStatementParser(filename)
-            parser.columns = {col: required_columns.index(col) for col in required_columns}
-            if 'account' in self.settings:
-                parser.statement.account_id = self.settings['account']
-            else:
-                parser.statement.account_id = 'BancoPosta'
-
-            if 'currency' in self.settings:
-                parser.statement.currency = self.settings.get('currency', 'EUR')
-
-            if 'date_format' in self.settings:
-                parser.date_format = self.settings['date_format']
-            
-            parser.statement.bank_id = self.settings.get('bank', 'BancoPosta')
-            return parser
-        else:
-            print('Unsupported file type')
-    
-        

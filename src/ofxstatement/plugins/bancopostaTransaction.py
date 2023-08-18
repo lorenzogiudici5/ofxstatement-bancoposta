@@ -1,6 +1,8 @@
 from enum import Enum
 from ofxstatement.statement import StatementLine, generate_transaction_id
 import re
+import tabula
+import os
 
 class TransactionType(Enum):
     BONIFICO = "BONIFICO"
@@ -211,8 +213,9 @@ class PagamentoPostamatTransaction(BancoPostaTransaction):
         else:
             payee = ""
 
-        self.operation = description.split(" OPERAZIONE ")[1].split(" CARTA ")[0]
-        self.card = description.split(" CARTA ")[1]
+        if ' OPERAZIONE ' in description and ' CARTA ' in description:
+            self.operation = description.split(" OPERAZIONE ")[1].split(" CARTA ")[0]
+            self.card = description.split(" CARTA ")[1]
 
         self.payee = payee
 
