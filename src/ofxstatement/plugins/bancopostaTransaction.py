@@ -164,7 +164,6 @@ class BolloTransaction(BancoPostaTransaction):
 class CommissioneTransaction(BancoPostaTransaction):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.reason = None
         self.type = TransactionType.COMMISSIONE
 
     def extract_info(self, description):
@@ -190,7 +189,7 @@ class CommissioneTransaction(BancoPostaTransaction):
         if self.reason:
             statement_line.payee = f"COMMISSIONE {self.reason}"
         else:
-            statement_line.payee = self.payee
+            statement_line.payee = self.reason
 
         return statement_line
 

@@ -39,7 +39,7 @@ def test_bancoposta_simple() -> None:
     assert line2.currency.symbol == "EUR"
     assert line2.date == datetime.datetime(2018, 1, 13, 0, 0, 0)
     assert line2.payee == "COMMISSIONE Ricarica Postepay da APP addebito su conto"
-    assert line2.memo == "Ricarica Postepay da APP addebito su conto"
+    assert line2.memo == "COMMISSIONE RICARICA PREPAGATA ADDEBITO IN CONTO DA APP/WEB Ricarica Postepay da APP addebito su conto"
     assert line2.trntype == "SRVCHG"
 
     line3 = statement.lines[3]
