@@ -38,16 +38,16 @@ def test_bancoposta_simple() -> None:
     assert line2.amount == Decimal("-1.00")
     assert line2.currency.symbol == "EUR"
     assert line2.date == datetime.datetime(2018, 1, 13, 0, 0, 0)
-    assert line2.payee == "APP/WEB"
-    assert line2.memo == "COMMISSIONE Ricarica Postepay da APP addebito su conto"
+    assert line2.payee == "COMMISSIONE Ricarica Postepay da APP addebito su conto"
+    assert line2.memo == "Ricarica Postepay da APP addebito su conto"
     assert line2.trntype == "SRVCHG"
 
     line3 = statement.lines[3]
     assert line3.amount == Decimal("250.00")
     assert line3.currency.symbol == "EUR"
     assert line3.date == datetime.datetime(2018, 1, 23, 0, 0, 0)
-    assert line3.payee == "NOME_MITTENTE"
-    assert line3.memo == "CAUSALE_BONIFICO"
+    assert line3.payee == "NOME_MITTENTE - CAUSALE_BONIFICO"
+    assert line3.memo == "BONIFICO A VOSTRO FAVORE TRN BBBBBBBB XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT DA NOME_MITTENTE PER CAUSALE_BONIFICO"
     assert line3.trntype == "XFER"
 
 def test_bancoposta_postagiro() -> None:
@@ -64,7 +64,7 @@ def test_bancoposta_postagiro() -> None:
     assert line0.currency.symbol == "EUR"
     assert line0.date == datetime.datetime(2018, 8, 1, 0, 0, 0)
     assert line0.payee == "Lorenzo Giudici - Pizze"
-    assert line0.memo == "Lorenzo Giudici - Pizze"
+    assert line0.memo == "POSTAGIRO TRN BBBBBBBB XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT DA Lorenzo Giudici PER Pizze"
     assert line0.trntype == "XFER"
 
     line1 = statement.lines[1]
@@ -72,7 +72,7 @@ def test_bancoposta_postagiro() -> None:
     assert line1.currency.symbol == "EUR"
     assert line1.date == datetime.datetime(2018, 8, 2, 0, 0, 0)
     assert line1.payee == "Lorenzo Giudici"
-    assert line1.memo == "Lorenzo Giudici"
+    assert line1.memo == "POSTAGIRO TRN BBBBBBBB XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT BENEF Lorenzo Giudici"
     assert line1.trntype == "XFER"
 
 def test_bancoposta_pagamento_postamat() -> None:
@@ -89,7 +89,7 @@ def test_bancoposta_pagamento_postamat() -> None:
     assert line0.amount == Decimal("-200.00")
     assert line0.currency.symbol == "EUR"
     assert line0.date == datetime.datetime(2018, 8, 1, 0, 0, 0)
-    assert line0.memo == "PAGAMENTO POSTAMAT"
+    assert line0.memo == "PAGAMENTO POSTAMAT ALTRI GESTORI 20/08/2020 10.27 RICARICA HYPE BIELLA ITA OPERAZIONE AAAA CARTA 123456"
     assert line0.payee == "RICARICA HYPE BIELLA ITA OPERAZIONE AAAA CARTA 123456"
 
 def test_bancoposta_bonifico() -> None:
@@ -106,16 +106,16 @@ def test_bancoposta_bonifico() -> None:
     assert line0.amount == Decimal("-200.00")
     assert line0.currency.symbol == "EUR"
     assert line0.date == datetime.datetime(2018, 8, 1, 0, 0, 0)
-    assert line0.payee == "Lorenzo Giudici"
-    assert line0.memo == "Buon compleanno!"
+    assert line0.payee == "Lorenzo Giudici - Buon compleanno!"
+    assert line0.memo == "VOSTRA DISPOS. DI BONIFICO TRN XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT BENEF Lorenzo Giudici PER Buon compleanno!"
 
     line1 = statement.lines[1]
     assert line1.trntype == "XFER"
     assert line1.amount == Decimal("200.00")
     assert line1.currency.symbol == "EUR"
     assert line1.date == datetime.datetime(2018, 8, 2, 0, 0, 0)
-    assert line1.payee == "Lorenzo Giudici"
-    assert line1.memo == "Tanti Auguri!"
+    assert line1.payee == "Lorenzo Giudici - Tanti Auguri!"
+    assert line1.memo == "BONIFICO A VOSTRO FAVORE TRN BBBBBBBB XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT DA Lorenzo Giudici PER Tanti Auguri!"
 
 def test_bancoposta_atm() -> None:
     plugin = BancoPostaPlugin(UI(), {})
@@ -131,7 +131,7 @@ def test_bancoposta_atm() -> None:
     assert line0.amount == Decimal("200.00")
     assert line0.currency.symbol == "EUR"
     assert line0.date == datetime.datetime(2018, 8, 1, 0, 0, 0)
-    assert line0.payee == "ATM"
+    assert line0.payee == "VERSAMENTO"
     assert line0.memo == "VERSAMENTO IN CONTANTI U.P. 10000 MILANO"
 
     line1 = statement.lines[1]
@@ -139,8 +139,8 @@ def test_bancoposta_atm() -> None:
     assert line1.amount == Decimal("-200.00")
     assert line1.currency.symbol == "EUR"
     assert line1.date == datetime.datetime(2018, 8, 2, 0, 0, 0)
-    assert line1.payee == "ATM"
-    assert line1.memo == "PRELIEVO IN CONTANTI U.P. 10000 MILANO"
+    assert line1.payee == "PRELIEVO"
+    assert line1.memo == "PRELIEVO POSTAMAT NOSTRO SPORTELLO AUTOMATICO 24/11/2020 08.21 ATM N. XXX UFFICIO POSTALE ROMA CARTA 11111"
 
 def test_bancoposta_addebito_diretto() -> None:
     plugin = BancoPostaPlugin(UI(), {})
@@ -157,7 +157,7 @@ def test_bancoposta_addebito_diretto() -> None:
     assert line0.currency.symbol == "EUR"
     assert line0.date == datetime.datetime(2018, 8, 1, 0, 0, 0)
     assert line0.payee == "E ON ENERGIA"
-    assert line0.memo == "ADDEBITO PREAUTORIZZATO E ON ENERGIA"
+    assert line0.memo == "ADDEBITO PREAUTORIZZATO E ON ENERGIA CID.XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT 100820 MAN. X"
 
     line1 = statement.lines[1]
     assert line1.trntype == "DIRECTDEBIT"
@@ -165,4 +165,4 @@ def test_bancoposta_addebito_diretto() -> None:
     assert line1.currency.symbol == "EUR"
     assert line1.date == datetime.datetime(2018, 8, 2, 0, 0, 0)
     assert line1.payee == "Postepay S.p."
-    assert line1.memo == "ADDEBITO DIRETTO SDD Postepay S.p."
+    assert line1.memo == "ADDEBITO DIRETTO SDD Postepay S.p. CID. XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT 020623 MAN. XX"

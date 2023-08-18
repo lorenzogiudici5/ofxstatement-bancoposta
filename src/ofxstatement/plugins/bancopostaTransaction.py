@@ -28,15 +28,17 @@ TRANSACTION_TYPES = {
 }
 
 class BancoPostaTransaction:
-    def __init__(self, date, settlement_date, amount, text, currency):
+    def __init__(self, date, settlement_date, amount, description, currency):
         self.date = date
         self.settlement_date = settlement_date
         self.amount = amount
         self.currency = currency
         self.type = None
-        self.extract_info(text)
+        self.description = description
+        self.payee = description
+        self.extract_info(description)
 
-    def extract_info(self, text):
+    def extract_info(self, description):
         raise NotImplementedError("This method must be implemented by a subclass")
 
     def to_statement_line(self):
@@ -44,82 +46,9 @@ class BancoPostaTransaction:
         statement_line.date = self.settlement_date
         statement_line.amount = self.amount
         statement_line.trntype = TRANSACTION_TYPES[self.type]
-        statement_line.id = generate_transaction_id(statement_line)
-        return statement_line
-
-
-
-class BonificoTransaction(BancoPostaTransaction):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.type = TransactionType.BONIFICO
-
-    def extract_info(self, text):
-        # type_end_index = text.find("TRN")
-        # if type_end_index == -1:
-        #     return None, text, text
-        # trntype = text[:type_end_index].strip()
-        
-        payee_start_index = text.find("DA")
-        if payee_start_index == -1:
-            payee_start_index = text.find("BENEF")
-            if payee_start_index == -1:
-                return None, text, text
-            payee_start_index += len("BENEF")
-        else:
-            payee_start_index += len("DA")
-
-        payee_end_index = text.find("PER")
-        if payee_end_index == -1:
-            return None, text, text
-        payee = text[payee_start_index:payee_end_index].strip()
-        
-        memo_start_index = payee_end_index + len("PER")
-        memo = text[memo_start_index:].strip()
-
-        self.payee = payee
-        self.description = memo
-
-    def to_statement_line(self):
-        statement_line = super().to_statement_line()
-        statement_line.payee = self.payee
         statement_line.memo = self.description
-        return statement_line
-
-class PostagiroTransaction(BancoPostaTransaction):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.type = TransactionType.POSTAGIRO
-
-    def extract_info(self, text):
-        payee_start_index = text.find("DA")
-        if payee_start_index == -1:
-            payee_start_index = text.find("BENEF")
-            if payee_start_index == -1:
-                return None, text, text
-            payee_start_index += len("BENEF")
-        else:
-            payee_start_index += len("DA")
-        
-        payee_end_index = text.find("PER")
-        if payee_end_index == -1:
-            payee = text[payee_start_index:].strip()
-            memo = ""
-        else:
-            payee = text[payee_start_index:payee_end_index].strip()
-            memo_start_index = payee_end_index + len("PER")
-            memo = text[memo_start_index:].strip()
-
-        self.payee = payee
-        self.description = memo
-
-    def to_statement_line(self):
-        statement_line = super().to_statement_line()
-        if self.description:
-            statement_line.payee = f"{self.payee} - {self.description}"
-        else:
-            statement_line.payee = self.payee
-        statement_line.memo = statement_line.payee
+        statement_line.payee = self.payee
+        statement_line.id = generate_transaction_id(statement_line)
         return statement_line
 
 class CreditTransaction(BancoPostaTransaction):
@@ -127,14 +56,11 @@ class CreditTransaction(BancoPostaTransaction):
         super().__init__(*args, **kwargs)
         self.type = TransactionType.CREDIT
 
-    def extract_info(self, text):
-        self.payee = text
-        self.description = text
+    def extract_info(self, description):
+        self.payee = description
 
     def to_statement_line(self):
         statement_line = super().to_statement_line()
-        statement_line.payee = self.payee
-        statement_line.memo = self.description
         return statement_line
 
 class DebitTransaction(BancoPostaTransaction):
@@ -142,14 +68,85 @@ class DebitTransaction(BancoPostaTransaction):
         super().__init__(*args, **kwargs)
         self.type = TransactionType.DEBIT
 
-    def extract_info(self, text):
-        self.payee = text
-        self.description = text
+    def extract_info(self, description):
+        self.payee = description
 
     def to_statement_line(self):
         statement_line = super().to_statement_line()
-        statement_line.payee = self.payee
-        statement_line.memo = self.description
+        return statement_line
+
+class BonificoTransaction(BancoPostaTransaction):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.type = TransactionType.BONIFICO
+
+    def extract_info(self, description):
+        # type_end_index = description.find("TRN")
+        # if type_end_index == -1:
+        #     return None, description, description
+        # trntype = description[:type_end_index].strip()
+        
+        payee_start_index = description.find("DA")
+        if payee_start_index == -1:
+            payee_start_index = description.find("BENEF")
+            if payee_start_index == -1:
+                return None, description, description
+            payee_start_index += len("BENEF")
+        else:
+            payee_start_index += len("DA")
+
+        payee_end_index = description.find("PER")
+        if payee_end_index == -1:
+            return None, description, description
+        payee = description[payee_start_index:payee_end_index].strip()
+        
+        reason_start_index = payee_end_index + len("PER")
+        reason = description[reason_start_index:].strip()
+
+        self.payee = payee
+        self.reason = reason
+
+    def to_statement_line(self):
+        statement_line = super().to_statement_line()
+        if self.reason:
+            statement_line.payee = f"{self.payee} - {self.reason}"
+        else:
+            statement_line.payee = self.payee
+        return statement_line
+
+class PostagiroTransaction(BancoPostaTransaction):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.type = TransactionType.POSTAGIRO
+
+    def extract_info(self, description):
+        payee_start_index = description.find("DA")
+        if payee_start_index == -1:
+            payee_start_index = description.find("BENEF")
+            if payee_start_index == -1:
+                return None, description, description
+            payee_start_index += len("BENEF")
+        else:
+            payee_start_index += len("DA")
+        
+        payee_end_index = description.find("PER")
+        if payee_end_index == -1:
+            payee = description[payee_start_index:].strip()
+            reason = ""
+        else:
+            payee = description[payee_start_index:payee_end_index].strip()
+            reason_start_index = payee_end_index + len("PER")
+            reason = description[reason_start_index:].strip()
+
+        self.payee = payee
+        self.reason = reason
+
+    def to_statement_line(self):
+        statement_line = super().to_statement_line()
+        if self.reason:
+            statement_line.payee = f"{self.payee} - {self.reason}"
+        else:
+            statement_line.payee = self.payee
         return statement_line
 
 class BolloTransaction(BancoPostaTransaction):
@@ -157,14 +154,11 @@ class BolloTransaction(BancoPostaTransaction):
         super().__init__(*args, **kwargs)
         self.type = TransactionType.BOLLO
 
-    def extract_info(self, text):
-        self.payee = TransactionType.BOLLO.value
-        self.description = TransactionType.BOLLO.value
+    def extract_info(self, description):
+        self.payee = description
 
     def to_statement_line(self):
         statement_line = super().to_statement_line()
-        statement_line.payee = self.payee
-        statement_line.memo = self.description
         return statement_line
 
 class CommissioneTransaction(BancoPostaTransaction):
@@ -172,28 +166,28 @@ class CommissioneTransaction(BancoPostaTransaction):
         super().__init__(*args, **kwargs)
         self.type = TransactionType.COMMISSIONE
 
-    def extract_info(self, text):
-        type_end_index = text.find("ADDEBITO")
-        if type_end_index == -1:
-            return None, text, text
-        trntype = text[:type_end_index].strip()
+    def extract_info(self, description):
+        # type_end_index = description.find("ADDEBITO")
+        # if type_end_index == -1:
+        #     return None, description, description
+        # trntype = description[:type_end_index].strip()
         
-        payee_start_index = text.find("DA") + len("DA")
-        payee_end_index = text.find("Ricarica")
+        payee_start_index = description.find("DA") + len("DA")
+        payee_end_index = description.find("Ricarica")
         if payee_end_index == -1:
-            return None, text, text
-        payee = text[payee_start_index:payee_end_index].strip()
+            return None, description, description
+        payee = description[payee_start_index:payee_end_index].strip()
         
-        memo_start_index = payee_end_index
-        memo = "COMMISSIONE " + text[memo_start_index:].strip()
+        reason_start_index = payee_end_index
+        reason = description[reason_start_index:].strip()
 
         self.payee = payee
-        self.description = memo
+        self.reason = reason
 
     def to_statement_line(self):
         statement_line = super().to_statement_line()
-        statement_line.payee = self.payee
-        statement_line.memo = self.description
+        statement_line.payee = f"COMMISSIONE {self.reason}"
+        statement_line.memo = self.reason
         return statement_line
 
 class PagamentoPostamatTransaction(BancoPostaTransaction):
@@ -201,22 +195,20 @@ class PagamentoPostamatTransaction(BancoPostaTransaction):
         super().__init__(*args, **kwargs)
         self.type = TransactionType.PAGAMENTO_POSTAMAT
 
-    def extract_info(self, text):      
+    def extract_info(self, description):      
         date_time_pattern = r"\d{2}/\d{2}/\d{4} \d{2}\.\d{2}"
-        match = re.search(date_time_pattern, text)
+        match = re.search(date_time_pattern, description)
         if match:
             payee_start_index = match.end()
-            payee = text[payee_start_index:].strip()
+            payee = description[payee_start_index:].strip()
         else:
-            payee = text
+            payee = description
 
         self.payee = payee
-        self.description = "PAGAMENTO POSTAMAT"
 
     def to_statement_line(self):
         statement_line = super().to_statement_line()
         statement_line.payee = self.payee
-        statement_line.memo = self.description
         return statement_line
 
 class ATMTransaction(BancoPostaTransaction):
@@ -224,14 +216,17 @@ class ATMTransaction(BancoPostaTransaction):
         super().__init__(*args, **kwargs)
         self.type = TransactionType.ATM
 
-    def extract_info(self, text):
-        self.payee = "ATM"
-        self.description = text
+    def extract_info(self, description):
+        if description.find("PRELIEVO") != -1:
+            trntype = "PRELIEVO"
+        else:
+            if description.find("VERSAMENTO") != -1:
+                trntype  = "VERSAMENTO"
+
+        self.payee = trntype
 
     def to_statement_line(self):
         statement_line = super().to_statement_line()
-        statement_line.payee = self.payee
-        statement_line.memo = self.description
         return statement_line
 
 class AddebitoDirettoTransaction(BancoPostaTransaction):
@@ -239,22 +234,19 @@ class AddebitoDirettoTransaction(BancoPostaTransaction):
         super().__init__(*args, **kwargs)
         self.type = TransactionType.ADDEBITO_DIRETTO
 
-    def extract_info(self, text):
+    def extract_info(self, description):
         trntype = TransactionType.ADDEBITO_DIRETTO.value
         
-        payee_start_index = text.find(trntype) + len(trntype)
-        payee_end_index = text.find("CID")
-        payee = text[payee_start_index:payee_end_index].strip()
+        payee_start_index = description.find(trntype) + len(trntype)
+        payee_end_index = description.find("CID")
+        payee = description[payee_start_index:payee_end_index].strip()
         
-        memo = trntype + " " + payee
+        reason = trntype + " " + payee
 
         self.payee = payee
-        self.description = memo
 
     def to_statement_line(self):
         statement_line = super().to_statement_line()
-        statement_line.payee = self.payee
-        statement_line.memo = self.description
         return statement_line
 
 class AddebitoPreautorizzatoTransaction(BancoPostaTransaction):
@@ -262,20 +254,16 @@ class AddebitoPreautorizzatoTransaction(BancoPostaTransaction):
         super().__init__(*args, **kwargs)
         self.type = TransactionType.ADDEBITO_PREAUTORIZZATO
 
-    def extract_info(self, text):
+    def extract_info(self, description):
         trntype = TransactionType.ADDEBITO_PREAUTORIZZATO.value
         
-        payee_start_index = text.find(trntype) + len(trntype)
-        payee_end_index = text.find("CID")
-        payee = text[payee_start_index:payee_end_index].strip()
+        payee_start_index = description.find(trntype) + len(trntype)
+        payee_end_index = description.find("CID")
+        payee = description[payee_start_index:payee_end_index].strip()
         
-        memo = trntype + " " + payee
-
+        reason = trntype + " " + payee
         self.payee = payee
-        self.description = memo
 
     def to_statement_line(self):
         statement_line = super().to_statement_line()
-        statement_line.payee = self.payee
-        statement_line.memo = self.description
         return statement_line
