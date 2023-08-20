@@ -188,29 +188,11 @@ class CommissioneTransaction(BancoPostaTransaction):
         self.type = TransactionType.COMMISSIONE
 
     def extract_info(self, description):
-        # type_end_index = description.find("ADDEBITO")
-        # if type_end_index == -1:
-        #     return None, description, description
-        # trntype = description[:type_end_index].strip()
-        
-        payee_start_index = description.find("DA") + len("DA")
-        payee_end_index = description.find("Ricarica")
-        if payee_end_index == -1:
-            return None, description, description
-        payee = description[payee_start_index:payee_end_index].strip()
-        
-        reason_start_index = payee_end_index
-        reason = description[reason_start_index:].strip()
-
-        self.payee = payee
-        self.reason = reason
+        self.payee = "COMMISSIONE"
 
     def to_statement_line(self):
         statement_line = super().to_statement_line()
-        if self.reason:
-            statement_line.payee = f"COMMISSIONE {self.reason}"
-        else:
-            statement_line.payee = self.reason
+        statement_line.payee = self.payee
 
         return statement_line
 

@@ -1,4 +1,3 @@
-# from hashlib import md5
 from typing import Optional, Any, List
 from decimal import Decimal
 import csv

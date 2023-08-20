@@ -38,7 +38,7 @@ def test_bancoposta_simple() -> None:
     assert line2.amount == Decimal("-1.00")
     assert line2.currency.symbol == "EUR"
     assert line2.date == datetime.datetime(2018, 1, 13, 0, 0, 0)
-    assert line2.payee == "COMMISSIONE Ricarica Postepay da APP addebito su conto"
+    assert line2.payee == "COMMISSIONE"
     assert line2.memo == "COMMISSIONE RICARICA PREPAGATA ADDEBITO IN CONTO DA APP/WEB Ricarica Postepay da APP addebito su conto"
     assert line2.trntype == "SRVCHG"
 
@@ -199,3 +199,36 @@ def test_bancoposta_addebito_diretto() -> None:
     assert line1.date == datetime.datetime(2018, 8, 2, 0, 0, 0)
     assert line1.payee == "Postepay S.p."
     assert line1.memo == "ADDEBITO DIRETTO SDD Postepay S.p. CID. XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT 020623 MAN. XX"
+
+def test_bancoposta_commissione() -> None:
+    plugin = BancoPostaPlugin(UI(), {})
+    filename = os.path.join(HERE, "samples", "transactions", "commissione.csv")
+
+    parser = plugin.get_parser(filename)
+    statement = parser.parse()
+
+    assert len(statement.lines) == 3
+
+    line0 = statement.lines[0]
+    assert line0.amount == Decimal("-1.00")
+    assert line0.currency.symbol == "EUR"
+    assert line0.date == datetime.datetime(2018, 8, 1, 0, 0, 0)
+    assert line0.payee == "COMMISSIONE"
+    assert line0.memo == "COMMISSIONE BONIFICO INSTANT IN USCITA TRN CCCCCCCCCCC BENEF Lorenzo Giudici PER Ricarica"
+    assert line0.trntype == "SRVCHG"
+
+    line1 = statement.lines[1]
+    assert line1.amount == Decimal("-2.00")
+    assert line1.currency.symbol == "EUR"
+    assert line1.date == datetime.datetime(2018, 8, 2, 0, 0, 0)
+    assert line1.payee == "COMMISSIONE"
+    assert line1.memo == "COMMISSIONE SDD REGIONE ITALIA CID.XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT 000000 MAN. 10000000000000000XXXXXXX"
+    assert line1.trntype == "SRVCHG"
+
+    line2 = statement.lines[2]
+    assert line2.amount == Decimal("-1.00")
+    assert line2.currency.symbol == "EUR"
+    assert line2.date == datetime.datetime(2018, 8, 3, 0, 0, 0)
+    assert line2.payee == "COMMISSIONE"
+    assert line2.memo == "COMMISSIONE RICARICA PREPAGATA ADDEBITO IN CONTO DA APP/WEB Ricarica Postepay da APP addebito su conto"
+    assert line2.trntype == "SRVCHG"
