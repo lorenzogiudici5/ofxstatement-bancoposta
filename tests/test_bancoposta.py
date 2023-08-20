@@ -99,7 +99,7 @@ def test_bancoposta_bonifico() -> None:
     parser = plugin.get_parser(filename)
     statement = parser.parse()
 
-    assert len(statement.lines) == 2
+    assert len(statement.lines) == 6
 
     line0 = statement.lines[0]
     assert line0.trntype == "XFER"
@@ -116,6 +116,39 @@ def test_bancoposta_bonifico() -> None:
     assert line1.date == datetime.datetime(2018, 8, 2, 0, 0, 0)
     assert line1.payee == "Lorenzo Giudici - Tanti Auguri!"
     assert line1.memo == "BONIFICO A VOSTRO FAVORE TRN BBBBBBBB XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT DA Lorenzo Giudici PER Tanti Auguri!"
+
+    line2 = statement.lines[2]
+    assert line2.trntype == "XFER"
+    assert line2.amount == Decimal("100.55")
+    assert line2.currency.symbol == "EUR"
+    assert line2.date == datetime.datetime(2018, 8, 3, 0, 0, 0)
+    assert line2.payee == "Lorenzo Giudici - Buon Natale"
+    assert line2.memo == "BONIFICO TRN BBBBBBBB XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT DA Lorenzo Giudici PER Buon Natale"
+
+    line3 = statement.lines[3]
+    assert line3.trntype == "XFER"
+    assert line3.amount == Decimal("-100.55")
+    assert line3.currency.symbol == "EUR"
+    assert line3.date == datetime.datetime(2018, 8, 4, 0, 0, 0)
+    assert line3.payee == "Lorenzo Giudici - Buon Natale"
+    assert line3.memo == "BONIFICO TRN XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT BENEF Lorenzo Giudici PER Buon Natale"
+
+    line4 = statement.lines[4]
+    assert line4.trntype == "XFER"
+    assert line4.amount == Decimal("500.50")
+    assert line4.currency.symbol == "EUR"
+    assert line4.date == datetime.datetime(2018, 8, 5, 0, 0, 0)
+    assert line4.payee == "Lorenzo Giudici - Buona Cresima"
+    assert line4.memo == "BONIFICO INSTANT IN ENTRATA TRN XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT DA Lorenzo Giudici PER Buona Cresima"
+
+    line5 = statement.lines[5]
+    assert line5.trntype == "XFER"
+    assert line5.amount == Decimal("-500.50")
+    assert line5.currency.symbol == "EUR"
+    assert line5.date == datetime.datetime(2018, 8, 5, 0, 0, 0)
+    assert line5.payee == "Lorenzo Giudici - Felicitazioni"
+    assert line5.memo == "BONIFICO INSTANT IN USCITA TRN AAAAAXXX XXXXXXXXXXXXXXX BENEF Lorenzo Giudici PER Felicitazioni"
+
 
 def test_bancoposta_atm() -> None:
     plugin = BancoPostaPlugin(UI(), {})

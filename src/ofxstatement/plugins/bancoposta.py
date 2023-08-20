@@ -1,4 +1,3 @@
-# from hashlib import md5
 import os
 from ofxstatement.plugins.bancopostacsvparser import BancoPostaCSVStatementParser
 from ofxstatement.plugins.bancopostapdfparser import BancoPostaPdfStatementParser

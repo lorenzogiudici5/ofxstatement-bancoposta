@@ -10,7 +10,7 @@ from ofxstatement.statement import StatementLine, Currency, Statement
 from ofxstatement.plugins.bancopostaTransaction import DebitTransaction, CreditTransaction, ATMTransaction, AddebitoDirettoTransaction, AddebitoPreautorizzatoTransaction, BolloTransaction, BonificoTransaction, CommissioneTransaction, PagamentoPostamatTransaction, PostagiroTransaction
 
 DESCRIPTION_TYPE_MAP = {
-    "BONIFICO A VOSTRO FAVORE": BonificoTransaction,
+    "BONIFICO": BonificoTransaction,
     "VOSTRA DISPOS. DI BONIFICO": BonificoTransaction,
     "POSTAGIRO": PostagiroTransaction,
     "IMPOSTA DI BOLLO": BolloTransaction,
