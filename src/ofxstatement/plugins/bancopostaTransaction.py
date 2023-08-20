@@ -1,8 +1,6 @@
 from enum import Enum
 from ofxstatement.statement import StatementLine, generate_transaction_id
 import re
-import tabula
-import os
 
 class TransactionType(Enum):
     BONIFICO = "BONIFICO"
@@ -16,6 +14,25 @@ class TransactionType(Enum):
     CREDIT = "CREDIT"
     DEBIT = "DEBIT"
 
+# Possible values for the trntype property of a StatementLine object:
+# - CREDIT: Generic credit.
+# - DEBIT: Generic debit.
+# - INT: Interest earned or paid (Note: Depends on signage of amount).
+# - DIV: Dividend.
+# - FEE: FI fee.
+# - SRVCHG: Service charge.
+# - DEP: Deposit.
+# - ATM: ATM debit or credit (Note: Depends on signage of amount).
+# - POS: Point of sale debit or credit (Note: Depends on signage of amount).
+# - XFER: Transfer.
+# - CHECK: Check.
+# - PAYMENT: Electronic payment.
+# - CASH: Cash withdrawal.
+# - DIRECTDEP: Direct deposit.
+# - DIRECTDEBIT: Merchant initiated debit.
+# - REPEATPMT: Repeating payment/standing order.
+# - OTHER: Other.
+
 TRANSACTION_TYPES = {
     TransactionType.BONIFICO: "XFER",
     TransactionType.POSTAGIRO : "XFER",
@@ -28,6 +45,7 @@ TRANSACTION_TYPES = {
     TransactionType.CREDIT: "CREDIT",
     TransactionType.DEBIT: "DEBIT"
 }
+
 
 class BancoPostaTransaction:
     def __init__(self, date, settlement_date, amount, description, currency):
@@ -50,6 +68,7 @@ class BancoPostaTransaction:
         statement_line.trntype = TRANSACTION_TYPES[self.type]
         statement_line.memo = self.description
         statement_line.payee = self.payee
+        statement_line.currency = self.currency
         statement_line.id = generate_transaction_id(statement_line)
         return statement_line
 
