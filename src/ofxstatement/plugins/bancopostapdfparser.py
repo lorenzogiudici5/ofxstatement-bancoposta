@@ -45,6 +45,13 @@ class BancoPostaPdfStatementParser(StatementParser):
     def parse_value(self, value: Optional[str], field: str) -> Any:
         value = value.strip() if value else value
 
+        if field == "date":
+            # check if value is a date in the format dd/mm/yy
+            if value and len(value) == 8 and value[2] == "/" and value[5] == "/":
+                return super().parse_value(value, field)
+            else:
+                return None
+
         if field == "amount":
             return self.parse_amount(value)
 
@@ -135,12 +142,11 @@ class BancoPostaPdfStatementParser(StatementParser):
         # if self.cur_record <= 1:
         #     return None
 
-        # Ignore Saldo iniziale/finale
-        settlementDateString = line["Valuta"]
-        if settlementDateString == "nan" or settlementDateString == "Valuta":
+        # Ignore Saldo iniziale/finale      
+        settlementDate = self.parse_value(line["Valuta"], "date")
+        if(settlementDate is None):
             return None
         
-        settlementDate = self.parse_value(settlementDateString, "date")
         date = self.parse_value(line["Data"], "date")
         
         income = self.parse_value(line["Accrediti"], "amount")
