@@ -102,11 +102,6 @@ class BonificoTransaction(BancoPostaTransaction):
         self.type = TransactionType.BONIFICO
 
     def extract_info(self, description):
-        # type_end_index = description.find("TRN")
-        # if type_end_index == -1:
-        #     return None, description, description
-        # trntype = description[:type_end_index].strip()
-        
         payee_start_index = description.find("DA")
         if payee_start_index == -1:
             payee_start_index = description.find("BENEF")
@@ -118,12 +113,11 @@ class BonificoTransaction(BancoPostaTransaction):
 
         payee_end_index = description.find("PER")
         if payee_end_index == -1:
-            return None, description, description
+            payee_end_index = len(description)
         payee = description[payee_start_index:payee_end_index].strip()
         
         reason_start_index = payee_end_index + len("PER")
         reason = description[reason_start_index:].strip()
-
         self.payee = payee
         self.reason = reason
 
