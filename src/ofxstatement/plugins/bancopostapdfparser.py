@@ -3,6 +3,7 @@ from typing import Optional, Any, List
 from decimal import Decimal, InvalidOperation
 import pandas
 import tabula
+import PyPDF2
 
 from ofxstatement.parser import StatementParser
 from ofxstatement.statement import StatementLine, Currency, Statement
@@ -53,8 +54,20 @@ class BancoPostaPdfStatementParser(StatementParser):
         return super().parse_value(value, field)
     
     def split_records(self) -> List[Dict]:
-        # return csv.reader(self.fin, delimiter=';')
-        dataFrame = tabula.read_pdf(self.filename, pages="all", pandas_options={'header': None, 'names': self.columns})
+        num_pages = self.count_pages()
+        
+        dataFrame = tabula.read_pdf(self.filename, multiple_tables=False, pages="1", stream=True, area=(284.637,13.462,731.112,586.438), pandas_options={'header': None, 'names': self.columns})
+
+        if(num_pages > 1):
+            i = 2
+            while i <= num_pages:
+                dataFrame = dataFrame + tabula.read_pdf(self.filename, multiple_tables=False, pages=str(i), stream=True, area=(106.797,11.974,772.045,586.438), pandas_options={'header': None, 'names': self.columns})
+                i += 1
+
+        if(len(dataFrame) == 0):
+            print("Error: no data found in pdf file")
+            return []
+        
         df = pandas.concat(dataFrame)
         df = df.astype(str)
               
@@ -97,6 +110,13 @@ class BancoPostaPdfStatementParser(StatementParser):
     
         result = dfresult.to_dict(orient='records')
         return result
+
+    def count_pages(self):
+        pdf = open(self.filename, 'rb')
+        pdfReader = PyPDF2.PdfReader(pdf)
+        num_pages = len(pdfReader.pages)
+        print(f'The PDF has {num_pages} pages.')
+        return num_pages
     
     def create_transaction(self, text, date, settlement_date, amount, currency):
         for key, value in DESCRIPTION_TYPE_MAP.items():
