@@ -11,6 +11,7 @@ class TransactionType(Enum):
     ATM = "ATM"
     ADDEBITO_DIRETTO = "ADDEBITO DIRETTO SDD"
     ADDEBITO_PREAUTORIZZATO = "ADDEBITO PREAUTORIZZATO"
+    ADDEBITO_DIRITTI_DI_CUSTODIA = "ADDEBITO DIRITTI DI CUSTODIA"
     CREDIT = "CREDIT"
     DEBIT = "DEBIT"
 
@@ -90,7 +91,10 @@ class DebitTransaction(BancoPostaTransaction):
         self.type = TransactionType.DEBIT
 
     def extract_info(self, description):
-        self.payee = description
+        if description.find(TransactionType.ADDEBITO_DIRITTI_DI_CUSTODIA.value) != -1:
+            self.payee = TransactionType.ADDEBITO_DIRITTI_DI_CUSTODIA.value
+        else:
+            self.payee = description
 
     def to_statement_line(self):
         statement_line = super().to_statement_line()
@@ -111,12 +115,12 @@ class BonificoTransaction(BancoPostaTransaction):
         else:
             payee_start_index += len("DA")
 
-        payee_end_index = description.find("PER")
+        payee_end_index = description.find("PER ")
         if payee_end_index == -1:
             payee_end_index = len(description)
         payee = description[payee_start_index:payee_end_index].strip()
         
-        reason_start_index = payee_end_index + len("PER")
+        reason_start_index = payee_end_index + len("PER ")
         reason = description[reason_start_index:].strip()
         self.payee = payee
         self.reason = reason
@@ -144,13 +148,13 @@ class PostagiroTransaction(BancoPostaTransaction):
         else:
             payee_start_index += len("DA")
         
-        payee_end_index = description.find("PER")
+        payee_end_index = description.find("PER ")
         if payee_end_index == -1:
             payee = description[payee_start_index:].strip()
             reason = ""
         else:
             payee = description[payee_start_index:payee_end_index].strip()
-            reason_start_index = payee_end_index + len("PER")
+            reason_start_index = payee_end_index + len("PER ")
             reason = description[reason_start_index:].strip()
 
         self.payee = payee
@@ -170,7 +174,10 @@ class BolloTransaction(BancoPostaTransaction):
         self.type = TransactionType.BOLLO
 
     def extract_info(self, description):
-        self.payee = description
+        if description.find("IMPOSTA DI BOLLO PRODOTTI FINANZIARI") != -1:
+            self.payee = "IMPOSTA DI BOLLO PRODOTTI FINANZIARI"
+        else:
+            self.payee = description
 
     def to_statement_line(self):
         statement_line = super().to_statement_line()
@@ -182,7 +189,14 @@ class CommissioneTransaction(BancoPostaTransaction):
         self.type = TransactionType.COMMISSIONE
 
     def extract_info(self, description):
-        self.payee = "COMMISSIONE"
+        if description.find("COMMISSIONE SDD") != -1:
+            self.payee = "COMMISSIONE SDD"
+        elif description.find("COMMISSIONE BONIFICO INSTANT") != -1:
+            self.payee = "COMMISSIONE BONIFICO INSTANT"
+        elif description.find("COMMISSIONE RICARICA PREPAGATA") != -1:
+            self.payee = "COMMISSIONE RICARICA PREPAGATA"
+        else:   
+            self.payee = "COMMISSIONE"
 
     def to_statement_line(self):
         statement_line = super().to_statement_line()
@@ -248,6 +262,9 @@ class AddebitoDirettoTransaction(BancoPostaTransaction):
         payee_start_index = description.find(trntype) + len(trntype)
         payee_end_index = description.find("CID")
         payee = description[payee_start_index:payee_end_index].strip()
+
+        if payee.startswith("**"):
+            payee = payee[2:].strip()
         
         reason = trntype + " " + payee
 

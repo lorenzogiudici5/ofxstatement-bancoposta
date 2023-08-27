@@ -38,7 +38,7 @@ def test_bancoposta_simple() -> None:
     assert line2.amount == Decimal("-1.00")
     assert line2.currency.symbol == "EUR"
     assert line2.date == datetime.datetime(2018, 1, 13, 0, 0, 0)
-    assert line2.payee == "COMMISSIONE"
+    assert line2.payee == "COMMISSIONE RICARICA PREPAGATA"
     assert line2.memo == "COMMISSIONE RICARICA PREPAGATA ADDEBITO IN CONTO DA APP/WEB Ricarica Postepay da APP addebito su conto"
     assert line2.trntype == "SRVCHG"
 
@@ -71,8 +71,8 @@ def test_bancoposta_postagiro() -> None:
     assert line1.amount == Decimal("200.00")
     assert line1.currency.symbol == "EUR"
     assert line1.date == datetime.datetime(2018, 8, 2, 0, 0, 0)
-    assert line1.payee == "Lorenzo Giudici"
-    assert line1.memo == "POSTAGIRO TRN BBBBBBBB XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT BENEF Lorenzo Giudici"
+    assert line1.payee == "PERCASSI Lorenzo"
+    assert line1.memo == "POSTAGIRO TRN BBBBBBBB XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT BENEF PERCASSI Lorenzo"
     assert line1.trntype == "XFER"
 
 def test_bancoposta_pagamento_postamat() -> None:
@@ -146,8 +146,8 @@ def test_bancoposta_bonifico() -> None:
     assert line5.amount == Decimal("-500.50")
     assert line5.currency.symbol == "EUR"
     assert line5.date == datetime.datetime(2018, 8, 5, 0, 0, 0)
-    assert line5.payee == "Lorenzo Giudici - Felicitazioni"
-    assert line5.memo == "BONIFICO INSTANT IN USCITA TRN AAAAAXXX XXXXXXXXXXXXXXX BENEF Lorenzo Giudici PER Felicitazioni"
+    assert line5.payee == "PERCASSI Lorenzo - Felicitazioni"
+    assert line5.memo == "BONIFICO INSTANT IN USCITA TRN AAAAAXXX XXXXXXXXXXXXXXX BENEF PERCASSI Lorenzo PER Felicitazioni"
 
 
 def test_bancoposta_atm() -> None:
@@ -182,7 +182,7 @@ def test_bancoposta_addebito_diretto() -> None:
     parser = plugin.get_parser(filename)
     statement = parser.parse()
 
-    assert len(statement.lines) == 2
+    assert len(statement.lines) == 3
 
     line0 = statement.lines[0]
     assert line0.trntype == "DIRECTDEBIT"
@@ -200,6 +200,14 @@ def test_bancoposta_addebito_diretto() -> None:
     assert line1.payee == "Postepay S.p."
     assert line1.memo == "ADDEBITO DIRETTO SDD Postepay S.p. CID. XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT 020623 MAN. XX"
 
+    line2 = statement.lines[2]
+    assert line2.trntype == "DIRECTDEBIT"
+    assert line2.amount == Decimal("-0.40")
+    assert line2.currency.symbol == "EUR"
+    assert line2.date == datetime.datetime(2018, 8, 3, 0, 0, 0)
+    assert line2.payee == "REGIONE LOMBA"
+    assert line2.memo == "ADDEBITO DIRETTO SDD** REGIONE LOMBA CID. XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT 020623 MAN. XX"
+
 def test_bancoposta_commissione() -> None:
     plugin = BancoPostaPlugin(UI(), {})
     filename = os.path.join(HERE, "samples", "transactions", "commissione.csv")
@@ -213,7 +221,7 @@ def test_bancoposta_commissione() -> None:
     assert line0.amount == Decimal("-1.00")
     assert line0.currency.symbol == "EUR"
     assert line0.date == datetime.datetime(2018, 8, 1, 0, 0, 0)
-    assert line0.payee == "COMMISSIONE"
+    assert line0.payee == "COMMISSIONE BONIFICO INSTANT"
     assert line0.memo == "COMMISSIONE BONIFICO INSTANT IN USCITA TRN CCCCCCCCCCC BENEF Lorenzo Giudici PER Ricarica"
     assert line0.trntype == "SRVCHG"
 
@@ -221,7 +229,7 @@ def test_bancoposta_commissione() -> None:
     assert line1.amount == Decimal("-2.00")
     assert line1.currency.symbol == "EUR"
     assert line1.date == datetime.datetime(2018, 8, 2, 0, 0, 0)
-    assert line1.payee == "COMMISSIONE"
+    assert line1.payee == "COMMISSIONE SDD"
     assert line1.memo == "COMMISSIONE SDD REGIONE ITALIA CID.XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT 000000 MAN. 10000000000000000XXXXXXX"
     assert line1.trntype == "SRVCHG"
 
@@ -229,6 +237,6 @@ def test_bancoposta_commissione() -> None:
     assert line2.amount == Decimal("-1.00")
     assert line2.currency.symbol == "EUR"
     assert line2.date == datetime.datetime(2018, 8, 3, 0, 0, 0)
-    assert line2.payee == "COMMISSIONE"
+    assert line2.payee == "COMMISSIONE RICARICA PREPAGATA"
     assert line2.memo == "COMMISSIONE RICARICA PREPAGATA ADDEBITO IN CONTO DA APP/WEB Ricarica Postepay da APP addebito su conto"
     assert line2.trntype == "SRVCHG"
