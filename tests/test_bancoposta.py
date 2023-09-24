@@ -57,7 +57,7 @@ def test_bancoposta_postagiro() -> None:
     parser = plugin.get_parser(filename)
     statement = parser.parse()
 
-    assert len(statement.lines) == 2
+    assert len(statement.lines) == 3
 
     line0 = statement.lines[0]
     assert line0.amount == Decimal("200.00")
@@ -74,6 +74,14 @@ def test_bancoposta_postagiro() -> None:
     assert line1.payee == "PERCASSI Lorenzo"
     assert line1.memo == "POSTAGIRO TRN BBBBBBBB XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT BENEF PERCASSI Lorenzo"
     assert line1.trntype == "XFER"
+
+    line2 = statement.lines[2]
+    assert line2.amount == Decimal("200.00")
+    assert line2.currency.symbol == "EUR"
+    assert line2.date == datetime.datetime(2018, 8, 3, 0, 0, 0)
+    assert line2.payee == "POSTAGIRO ONLINE"
+    assert line2.memo == "POSTAGIRO ONLINE"
+    assert line2.trntype == "XFER"
 
 def test_bancoposta_pagamento_postamat() -> None:
     plugin = BancoPostaPlugin(UI(), {})

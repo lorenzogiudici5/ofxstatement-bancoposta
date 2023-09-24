@@ -139,6 +139,13 @@ class PostagiroTransaction(BancoPostaTransaction):
         self.type = TransactionType.POSTAGIRO
 
     def extract_info(self, description):
+        # if description is equal to "POSTAGIRO ONLINE" then the payee and the reason is "POSTAGIRO ONLINE"
+        if description == "POSTAGIRO ONLINE":
+            self.payee = description
+            self.reason = ""
+            return
+
+        # payee
         payee_start_index = description.find("DA")
         if payee_start_index == -1:
             payee_start_index = description.find("BENEF")
@@ -148,6 +155,7 @@ class PostagiroTransaction(BancoPostaTransaction):
         else:
             payee_start_index += len("DA")
         
+        # reason
         payee_end_index = description.find("PER ")
         if payee_end_index == -1:
             payee = description[payee_start_index:].strip()
