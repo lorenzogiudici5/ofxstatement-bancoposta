@@ -8,9 +8,6 @@ from setuptools.command.test import test as TestCommand
 
 version = "0.0.3"
 
-with open("README.rst") as f:
-    long_description = f.read()
-
 setup(
     name="ofxstatement-bancoposta",
     version=version,
