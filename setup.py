@@ -6,7 +6,7 @@ from distutils.core import setup
 from distutils.core import setup
 from setuptools.command.test import test as TestCommand
 
-version = "0.0.2"
+version = "0.0.3"
 
 with open("README.rst") as f:
     long_description = f.read()
@@ -18,7 +18,6 @@ setup(
     author_email="lorenzogiudici5@gmail.com",
     url="https://github.com/lorenzogiudici5/ofxstatement-bancoposta",
     description=("Bancoposta plugin for ofxstatement"),
-    long_description=long_description,
     long_description=open("README.md").read() + "\n\n" + open(os.path.join("docs", "HISTORY.txt")).read(),
     long_description_content_type="text/markdown",
     license="GPLv3",
