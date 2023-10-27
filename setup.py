@@ -1,10 +1,12 @@
 #!/usr/bin/python3
 """Setup
 """
+import os
 from setuptools import find_packages
-from distutils.core import setup
-from distutils.core import setup
 from setuptools.command.test import test as TestCommand
+from distutils.core import setup
+
+import unittest
 
 version = "0.0.3"
 
