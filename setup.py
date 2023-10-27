@@ -17,7 +17,7 @@ setup(
     author_email="lorenzogiudici5@gmail.com",
     url="https://github.com/lorenzogiudici5/ofxstatement-bancoposta",
     description=("Bancoposta plugin for ofxstatement"),
-    long_description=open("README.md").read() + "\n\n" + open(os.path.join("docs", "HISTORY.txt")).read(),
+    long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     license="GPLv3",
     keywords=["ofx", "banking", "statement", "bancoposta"],
