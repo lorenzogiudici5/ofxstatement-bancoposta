@@ -4,7 +4,7 @@
 from setuptools import find_packages
 from distutils.core import setup
 
-version = "0.0.1"
+version = "0.0.2"
 
 with open("README.rst") as f:
     long_description = f.read()
@@ -14,7 +14,7 @@ setup(
     version=version,
     author="Lorenzo Giudici",
     author_email="lorenzogiudici5@gmail.com",
-    url="https://github.com/kedder/ofxstatement",
+    url="https://github.com/lorenzogiudici5/ofxstatement-bancoposta",
     description=("Bancoposta plugin for ofxstatement"),
     long_description=long_description,
     license="GPLv3",
