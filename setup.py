@@ -3,6 +3,8 @@
 """
 from setuptools import find_packages
 from distutils.core import setup
+from distutils.core import setup
+from setuptools.command.test import test as TestCommand
 
 version = "0.0.2"
 
@@ -17,8 +19,10 @@ setup(
     url="https://github.com/lorenzogiudici5/ofxstatement-bancoposta",
     description=("Bancoposta plugin for ofxstatement"),
     long_description=long_description,
+    long_description=open("README.md").read() + "\n\n" + open(os.path.join("docs", "HISTORY.txt")).read(),
+    long_description_content_type="text/markdown",
     license="GPLv3",
-    keywords=["ofx", "banking", "statement"],
+    keywords=["ofx", "banking", "statement", "bancoposta"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
@@ -33,9 +37,13 @@ setup(
     package_dir={"": "src"},
     namespace_packages=["ofxstatement", "ofxstatement.plugins"],
     entry_points={
-        "ofxstatement": ["bancoposta = ofxstatement.plugins.bancoposta:BancoPostaPlugin"]
+        "ofxstatement":
+        [
+            "bancoposta = ofxstatement.plugins.bancoposta:BancoPostaPlugin"
+        ]
     },
     install_requires=["ofxstatement"],
+    extras_require={"test": ["pytest"]},
     include_package_data=True,
     zip_safe=True,
 )
