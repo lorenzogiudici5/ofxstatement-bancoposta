@@ -39,12 +39,14 @@ jobs:
         --user
     - name: Build a binary wheel and a source tarball
       run: >-
-        python3 -m build --sdist
+        python3 -m build
     - name: Store the distribution packages
       uses: actions/upload-artifact@v3
       with:
         name: python-package-distributions
-        path: dist/
+        path: |
+          dist/*.tar.gz
+          dist/*.whl
   
   publish-to-testpypi:
     name: Publish Python 🐍 distribution 📦 to TestPyPI
