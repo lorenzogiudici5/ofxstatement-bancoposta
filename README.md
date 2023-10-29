@@ -23,5 +23,5 @@ python3 setup.py install
 ## Usage
 Download your statement pdf file from Poste web site and then run
 ```bash
-$ ofxstatement convert -t bancoposta EC_2023_10 EC_2023_10.ofx
+$ ofxstatement convert -t bancoposta EC_2023_10.pdf EC_2023_10.ofx
 ```
