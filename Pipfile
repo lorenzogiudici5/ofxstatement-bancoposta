@@ -7,10 +7,11 @@ verify_ssl = true
 mypy = "*"
 pytest = "*"
 black = "*"
+pylint = "*"
 
 [packages]
 ofxstatement = "*"
-ofxstatement-sample = {editable = true,path = "."}
+ofxstatement-bancoposta = {editable = true,path = "."}
 
 [pipenv]
 allow_prereleases = true
