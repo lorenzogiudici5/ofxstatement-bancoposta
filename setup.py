@@ -8,7 +8,7 @@ from distutils.core import setup
 
 import unittest
 
-version = "0.0.3"
+version = "1.0.0"
 
 setup(
     name="ofxstatement-bancoposta",
