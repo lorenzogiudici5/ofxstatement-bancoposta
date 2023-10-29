@@ -44,7 +44,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: python-package-distributions
-        path: |
+        path: | # don't upload .egg files because pypi not support them anymore
           dist/*.tar.gz
           dist/*.whl
   
