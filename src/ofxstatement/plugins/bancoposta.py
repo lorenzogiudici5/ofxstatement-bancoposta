@@ -5,7 +5,7 @@ from ofxstatement.plugins.bancopostapdfparser import BancoPostaPdfStatementParse
 from ofxstatement.plugin import Plugin
 
 class BancoPostaPlugin(Plugin):
-    """BancoPosta plugin (for developers only)"""
+    """BancoPosta"""
 
     def get_parser(self, filename: str):
         extension = os.path.splitext(filename)[1]
