@@ -22,7 +22,7 @@ setup(
     license="GPLv3",
     keywords=["ofx", "banking", "statement", "bancoposta"],
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production/Stable",
         "Programming Language :: Python :: 3",
         "Natural Language :: English",
         "Topic :: Office/Business :: Financial :: Accounting",
@@ -43,5 +43,5 @@ setup(
     install_requires=["ofxstatement"],
     extras_require={"test": ["pytest"]},
     include_package_data=True,
-    zip_safe=False,
+    zip_safe=True,
 )
