@@ -94,6 +94,9 @@ jobs:
         path: dist/
     - name: Publish distribution 📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+
+        skip-existing: true
 
   github-release:
     name: >-
@@ -108,6 +111,8 @@ jobs:
       id-token: write  # IMPORTANT: mandatory for sigstore
 
     steps:
+    - name: Check out code
+      uses: actions/checkout@v2
     - name: Download all the dists
       uses: actions/download-artifact@v3
       with:
@@ -119,14 +124,17 @@ jobs:
         inputs: >-
           ./dist/*.tar.gz
           ./dist/*.whl
+    - name: Extract release notes
+      id: extract-release-notes
+      uses: ffurrer2/extract-release-notes@v1
     - name: Create GitHub Release
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: >-
-        gh release create
-        '${{ github.ref_name }}'
-        --notes ""
+        gh release create --notes '${{ steps.extract-release-notes.outputs.release_notes }}' --title ${{ github.ref_name }} ${{ github.ref_name }}
     - name: Upload artifact signatures to GitHub Release
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GH_TOKEN: ${{ github.token }}
       # Upload to GitHub Release using the `gh` CLI.
       # `dist/` contains the built packages, and the
       # sigstore-produced signatures and certificates.
