@@ -1,0 +1,15 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\.github",
+    "\\.github\\workflows",
+    "\\docs",
+    "\\src",
+    "\\src\\ofxstatement",
+    "\\src\\ofxstatement\\plugins",
+    "\\tests",
+    "\\tests\\samples"
+  ],
+  "SelectedNode": "\\setup.py",
+  "PreviewInSolutionExplorer": false
+}

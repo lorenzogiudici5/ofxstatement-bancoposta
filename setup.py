@@ -43,5 +43,5 @@ setup(
     install_requires=["ofxstatement"],
     extras_require={"test": ["pytest"]},
     include_package_data=True,
-    zip_safe=True,
+    zip_safe=False,
 )
