@@ -165,6 +165,14 @@ def test_bancoposta_bonifico() -> None:
     assert line6.payee == "Lorenzo Giudici - Regalo 2024"
     assert line6.memo == "BONIFICO Da Lorenzo Giudici per Regalo 2024 TRN 0306964772471211485291052910IT BCITITMMXXX"
 
+    line7 = statement.lines[7]
+    assert line7.trntype == "XFER"
+    assert line7.amount == Decimal("-500.50")
+    assert line7.currency.symbol == "EUR"
+    assert line7.date == datetime.datetime(2018, 8, 5, 0, 0, 0)
+    assert line7.payee == "Lorenzo Giudici - Spese famiglia"
+    assert line7.memo == "BONIFICO A Lorenzo Giudici per Spese famiglia TRN EA24072422101349481110052910IT"
+
 
 def test_bancoposta_atm() -> None:
     plugin = BancoPostaPlugin(UI(), {})
