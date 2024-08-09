@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2] - 2024-08-09
+
+### Fixed
+- Add missing dependencies to setup.py
+- Handle new description format for transaction of type "Bonifico"
+
 ## [1.0.1] - 2023-10-29
 
 ### Fixed
