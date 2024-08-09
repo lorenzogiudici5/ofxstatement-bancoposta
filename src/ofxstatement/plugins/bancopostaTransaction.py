@@ -106,22 +106,53 @@ class BonificoTransaction(BancoPostaTransaction):
         self.type = TransactionType.BONIFICO
 
     def extract_info(self, description):
-        payee_start_index = description.find("DA")
-        if payee_start_index == -1:
-            payee_start_index = description.find("BENEF")
-            if payee_start_index == -1:
-                return None, description, description
-            payee_start_index += len("BENEF")
-        else:
-            payee_start_index += len("DA")
+        payee = None
+        reason = None
 
-        payee_end_index = description.find("PER ")
-        if payee_end_index == -1:
-            payee_end_index = len(description)
-        payee = description[payee_start_index:payee_end_index].strip()
-        
-        reason_start_index = payee_end_index + len("PER ")
-        reason = description[reason_start_index:].strip()
+        # Version 1 with "BENEF"
+        if "DA" in description or "BENEF" in description:
+            payee_start_index = description.find("DA")
+            if payee_start_index == -1:
+                payee_start_index = description.find("BENEF")
+                if payee_start_index == -1:
+                    return None, description, description
+                payee_start_index += len("BENEF")
+            else:
+                payee_start_index += len("DA")
+
+            payee_end_index = description.find("PER ")
+            if payee_end_index == -1:
+                payee_end_index = len(description)
+            
+            payee = description[payee_start_index:payee_end_index].strip()
+            
+            reason_start_index = payee_end_index + len("PER ")
+            reason = description[reason_start_index:].strip()
+
+        # Version 2 with "A"
+        elif "Da " in description or "A " in description:
+            payee_start_index = description.find("Da ")
+            if payee_start_index == -1:
+                payee_start_index = description.find("A ")
+                if payee_start_index == -1:
+                    return None, description, description
+                payee_start_index += len("A ")
+            else:
+                payee_start_index += len("Da ")
+
+            payee_end_index = description.find(" per ")
+            if payee_end_index == -1:
+                payee_end_index = len(description)
+            
+            payee = description[payee_start_index:payee_end_index].strip()
+            
+            reason_start_index = payee_end_index + len(" per ")
+            reason_end_index = description.find(" TRN ", reason_start_index)
+            if reason_end_index == -1:
+                reason_end_index = len(description)
+            
+            reason = description[reason_start_index:reason_end_index].strip()
+
         self.payee = payee
         self.reason = reason
 

@@ -107,7 +107,7 @@ def test_bancoposta_bonifico() -> None:
     parser = plugin.get_parser(filename)
     statement = parser.parse()
 
-    assert len(statement.lines) == 6
+    assert len(statement.lines) == 8
 
     line0 = statement.lines[0]
     assert line0.trntype == "XFER"
@@ -156,6 +156,22 @@ def test_bancoposta_bonifico() -> None:
     assert line5.date == datetime.datetime(2018, 8, 5, 0, 0, 0)
     assert line5.payee == "PERCASSI Lorenzo - Felicitazioni"
     assert line5.memo == "BONIFICO INSTANT IN USCITA TRN AAAAAXXX XXXXXXXXXXXXXXX BENEF PERCASSI Lorenzo PER Felicitazioni"
+
+    line6 = statement.lines[6]
+    assert line6.trntype == "XFER"
+    assert line6.amount == Decimal("-500.50")
+    assert line6.currency.symbol == "EUR"
+    assert line6.date == datetime.datetime(2018, 8, 5, 0, 0, 0)
+    assert line6.payee == "Lorenzo Giudici - Regalo 2024"
+    assert line6.memo == "BONIFICO Da Lorenzo Giudici per Regalo 2024 TRN 0306964772471211485291052910IT BCITITMMXXX"
+
+    line7 = statement.lines[7]
+    assert line7.trntype == "XFER"
+    assert line7.amount == Decimal("-500.50")
+    assert line7.currency.symbol == "EUR"
+    assert line7.date == datetime.datetime(2018, 8, 5, 0, 0, 0)
+    assert line7.payee == "Lorenzo Giudici - Spese famiglia"
+    assert line7.memo == "BONIFICO A Lorenzo Giudici per Spese famiglia TRN EA24072422101349481110052910IT"
 
 
 def test_bancoposta_atm() -> None:
