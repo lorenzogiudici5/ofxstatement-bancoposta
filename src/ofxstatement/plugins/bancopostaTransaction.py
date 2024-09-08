@@ -175,8 +175,22 @@ class PostagiroTransaction(BancoPostaTransaction):
             self.payee = description
             self.reason = ""
             return
+        
+        # Version 2 with "A" and "Da"
+        if description.startswith("POSTAGIRO A") or description.startswith("POSTAGIRO Da"):
+            # Split the description to exclude the TRN part
+            parts = description.split(" TRN ")
+            if len(parts) > 1:
+                description = parts[0]
+            
+            # Split the description to extract payee and reason
+            parts = description.split(" per ")
+            if len(parts) == 2:
+                self.payee = parts[0].replace("POSTAGIRO A", "").replace("POSTAGIRO Da", "").strip()
+                self.reason = parts[1].strip()
+                return
 
-        # payee
+        # Version 1 with "BENEF"
         payee_start_index = description.find("DA")
         if payee_start_index == -1:
             payee_start_index = description.find("BENEF")
@@ -189,15 +203,11 @@ class PostagiroTransaction(BancoPostaTransaction):
         # reason
         payee_end_index = description.find("PER ")
         if payee_end_index == -1:
-            payee = description[payee_start_index:].strip()
-            reason = ""
+            self.payee = description[payee_start_index:].strip()
+            self.reason = ""
         else:
-            payee = description[payee_start_index:payee_end_index].strip()
-            reason_start_index = payee_end_index + len("PER ")
-            reason = description[reason_start_index:].strip()
-
-        self.payee = payee
-        self.reason = reason
+            self.payee = description[payee_start_index:payee_end_index].strip()
+            self.reason = description[payee_end_index + len("PER "):].strip()
 
     def to_statement_line(self):
         statement_line = super().to_statement_line()
