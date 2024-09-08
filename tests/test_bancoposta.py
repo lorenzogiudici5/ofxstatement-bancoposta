@@ -88,7 +88,7 @@ def test_bancoposta_postagiro() -> None:
     assert line3.currency.symbol == "EUR"
     assert line3.date == datetime.datetime(2018, 8, 4, 0, 0, 0)
     assert line3.payee == "Pippo Pippo - Regalo compleanno"
-    assert line3.memo == "POSTAGIRO A Pippo Pippo per Regalo compleanno"
+    assert line3.memo == "POSTAGIRO A Pippo Pippo per Regalo compleanno TRN XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT"
     assert line3.trntype == "XFER"
 
     line4 = statement.lines[4]
@@ -96,7 +96,7 @@ def test_bancoposta_postagiro() -> None:
     assert line4.currency.symbol == "EUR"
     assert line4.date == datetime.datetime(2018, 8, 4, 0, 0, 0)
     assert line4.payee == "Pluto - Regalo"
-    assert line4.memo == "POSTAGIRO Da Pluto per Regalo"
+    assert line4.memo == "POSTAGIRO Da Pluto per Regalo TRN XXXXXXXXXXXXXXXXXXXXXXXXXXXXIT"
     assert line4.trntype == "XFER"
 
 def test_bancoposta_pagamento_postamat() -> None:

@@ -178,6 +178,12 @@ class PostagiroTransaction(BancoPostaTransaction):
         
         # Version 2 with "A" and "Da"
         if description.startswith("POSTAGIRO A") or description.startswith("POSTAGIRO Da"):
+            # Split the description to exclude the TRN part
+            parts = description.split(" TRN ")
+            if len(parts) > 1:
+                description = parts[0]
+            
+            # Split the description to extract payee and reason
             parts = description.split(" per ")
             if len(parts) == 2:
                 self.payee = parts[0].replace("POSTAGIRO A", "").replace("POSTAGIRO Da", "").strip()
