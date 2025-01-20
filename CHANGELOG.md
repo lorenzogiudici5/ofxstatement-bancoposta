@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4] - 2025-01-25
+
+### Fixed
+- Handle new description format for transaction of type "Postagiro"
+
 ## [1.0.3] - 2024-09-08
 
 ### Fixed
